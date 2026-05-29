@@ -1,0 +1,3 @@
+aws_region = "us-east-1"
+
+container_image = "YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/edutech-lms-frontend:latest"
