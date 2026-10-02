@@ -55,11 +55,10 @@ resource "aws_ecs_service" "lms" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets          = aws_subnet.public[*].id
+    subnets          = aws_subnet.private[*].id
     security_groups  = [aws_security_group.ecs_tasks.id]
-    assign_public_ip = true
+    assign_public_ip = false
   }
-
   load_balancer {
     target_group_arn = aws_lb_target_group.main.arn
     container_name   = "lms-frontend"
