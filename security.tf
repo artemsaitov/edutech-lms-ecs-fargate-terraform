@@ -1,7 +1,7 @@
 resource "aws_security_group" "alb" {
   name        = "EduTech-ALB-SG"
   description = "Allow HTTP traffic to the Application Load Balancer"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = module.network.vpc_id
 
   ingress {
     description = "Allow HTTP from the internet"
@@ -25,14 +25,11 @@ resource "aws_security_group" "alb" {
   }
 }
 
-# -----------------------------
-# Security Group for ECS Tasks
-# -----------------------------
 
 resource "aws_security_group" "ecs_tasks" {
   name        = "EduTech-Container-SG"
   description = "Allow traffic from ALB to ECS tasks"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = module.network.vpc_id
 
   ingress {
     description     = "Allow ALB to reach container on port 3000"

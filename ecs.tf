@@ -69,7 +69,7 @@ resource "aws_ecs_service" "lms" {
   }
 
   network_configuration {
-    subnets          = aws_subnet.private[*].id
+    subnets          = module.network.private_subnet_ids
     security_groups  = [aws_security_group.ecs_tasks.id]
     assign_public_ip = false
   }
