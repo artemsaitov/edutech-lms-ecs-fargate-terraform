@@ -1,6 +1,11 @@
 resource "aws_ecs_cluster" "main" {
   name = "EduTech-LMS-Cluster"
 
+  setting {
+    name  = "containerInsights"
+    value = "enabled"
+  }
+
   tags = {
     Name    = "EduTech-LMS-Cluster"
     Project = "EduTech-LMS"
