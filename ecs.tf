@@ -51,8 +51,17 @@ resource "aws_ecs_service" "lms" {
   name            = "EduTech-LMS-Service"
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.lms.arn
-  desired_count   = 1
+  desired_count   = 2
   launch_type     = "FARGATE"
+
+  deployment_minimum_healthy_percent = 100
+  deployment_maximum_percent         = 200
+  health_check_grace_period_seconds  = 60
+
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
 
   network_configuration {
     subnets          = aws_subnet.private[*].id
