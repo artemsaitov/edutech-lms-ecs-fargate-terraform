@@ -4,12 +4,12 @@ output "ecr_repository_url" {
 }
 
 output "application_url" {
-  value       = "http://${aws_lb.main.dns_name}"
+  value       = "http://${module.alb.dns_name}"
   description = "The URL to access the LMS frontend application."
 }
 
 output "alb_dns_name" {
-  value       = aws_lb.main.dns_name
+  value       = module.alb.dns_name
   description = "PublicDNS name of the Application Load Balancer."
 }
 output "ecs_cluster_name" {

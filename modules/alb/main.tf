@@ -2,8 +2,8 @@ resource "aws_lb" "main" {
   name               = "EduTech-LMS-ALB"
   internal           = false
   load_balancer_type = "application"
-  security_groups    = [aws_security_group.alb.id]
-  subnets            = module.network.public_subnet_ids
+  security_groups    = [var.alb_security_group_id]
+  subnets            = var.public_subnet_ids
 
   tags = {
     Name    = "EduTech-LMS-ALB"
@@ -15,7 +15,7 @@ resource "aws_lb_target_group" "main" {
   name        = "EduTech-LMS-TG"
   port        = 3000
   protocol    = "HTTP"
-  vpc_id      = module.network.vpc_id
+  vpc_id      = var.vpc_id
   target_type = "ip"
 
   health_check {

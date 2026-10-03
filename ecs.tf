@@ -74,13 +74,13 @@ resource "aws_ecs_service" "lms" {
     assign_public_ip = false
   }
   load_balancer {
-    target_group_arn = aws_lb_target_group.main.arn
+    target_group_arn = module.alb.target_group_arn
     container_name   = "lms-frontend"
     container_port   = 3000
   }
 
   depends_on = [
-    aws_lb_listener.http,
+    module.alb,
     aws_iam_role_policy_attachment.ecs_task_execution
   ]
 
