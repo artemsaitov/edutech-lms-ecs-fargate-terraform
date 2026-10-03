@@ -32,3 +32,8 @@ variable "aws_region" {
   description = "AWS region"
   type        = string
 }
+
+variable "desired_count" {
+  description = "Desired number of ECS tasks"
+  type        = number
+}

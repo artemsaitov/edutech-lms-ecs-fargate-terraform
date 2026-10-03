@@ -1,5 +1,5 @@
 module "ecs" {
-  source = "./modules/ecs"
+  source = "../../modules/ecs"
 
   private_subnet_ids    = module.network.private_subnet_ids
   ecs_security_group_id = aws_security_group.ecs_tasks.id
@@ -8,4 +8,6 @@ module "ecs" {
   log_group_name        = aws_cloudwatch_log_group.ecs.name
   container_image       = var.container_image
   aws_region            = var.aws_region
+  desired_count         = var.ecs_desired_count
+
 }
