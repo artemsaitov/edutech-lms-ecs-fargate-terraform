@@ -13,12 +13,12 @@ output "alb_dns_name" {
   description = "PublicDNS name of the Application Load Balancer."
 }
 output "ecs_cluster_name" {
-  value       = aws_ecs_cluster.main.name
+  value       = module.ecs.cluster_name
   description = "The name of the ECS cluster."
 }
 
 output "ecs_service_name" {
-  value       = aws_ecs_service.lms.name
+  value       = module.ecs.service_name
   description = "The name of the ECS service running the LMS frontend."
 }
 

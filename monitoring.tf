@@ -20,8 +20,8 @@ resource "aws_cloudwatch_metric_alarm" "ecs_high_cpu" {
   threshold           = 80
 
   dimensions = {
-    ClusterName = aws_ecs_cluster.main.name
-    ServiceName = aws_ecs_service.lms.name
+    ClusterName = module.ecs.cluster_name
+    ServiceName = module.ecs.service_name
   }
 
   treat_missing_data = "notBreaching"
@@ -39,8 +39,8 @@ resource "aws_cloudwatch_metric_alarm" "ecs_high_memory" {
   threshold           = 80
 
   dimensions = {
-    ClusterName = aws_ecs_cluster.main.name
-    ServiceName = aws_ecs_service.lms.name
+    ClusterName = module.ecs.cluster_name
+    ServiceName = module.ecs.service_name
   }
 
   treat_missing_data = "notBreaching"

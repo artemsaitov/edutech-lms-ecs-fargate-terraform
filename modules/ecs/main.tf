@@ -19,7 +19,7 @@ resource "aws_ecs_task_definition" "lms" {
   network_mode             = "awsvpc"
   cpu                      = "512"
   memory                   = "1024"
-  execution_role_arn       = aws_iam_role.ecs_task_execution.arn
+  execution_role_arn       = var.execution_role_arn
 
   container_definitions = jsonencode([
     {
@@ -38,7 +38,7 @@ resource "aws_ecs_task_definition" "lms" {
       logConfiguration = {
         logDriver = "awslogs"
         options = {
-          awslogs-group         = aws_cloudwatch_log_group.ecs.name
+          awslogs-group         = var.log_group_name
           awslogs-region        = var.aws_region
           awslogs-stream-prefix = "ecs"
         }
@@ -69,20 +69,15 @@ resource "aws_ecs_service" "lms" {
   }
 
   network_configuration {
-    subnets          = module.network.private_subnet_ids
-    security_groups  = [aws_security_group.ecs_tasks.id]
+    subnets          = var.private_subnet_ids
+    security_groups  = [var.ecs_security_group_id]
     assign_public_ip = false
   }
   load_balancer {
-    target_group_arn = module.alb.target_group_arn
+    target_group_arn = var.target_group_arn
     container_name   = "lms-frontend"
     container_port   = 3000
   }
-
-  depends_on = [
-    module.alb,
-    aws_iam_role_policy_attachment.ecs_task_execution
-  ]
 
   tags = {
     Name    = "EduTech-LMS-Service"
