@@ -2,6 +2,9 @@ name: Test AWS OIDC
 
 on:
   workflow_dispatch:
+    push:
+    branches:
+      - refactor/production-ready-ecs
 
 permissions:
   id-token: write
