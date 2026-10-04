@@ -2,9 +2,6 @@ name: Test AWS OIDC
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - refactor/production-ready-ecs
 
 permissions:
   id-token: write
@@ -12,6 +9,7 @@ permissions:
 
 jobs:
   test-aws-auth:
+    name: Verify AWS OIDC Authentication
     runs-on: ubuntu-latest
 
     steps:
