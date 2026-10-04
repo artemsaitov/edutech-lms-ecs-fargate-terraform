@@ -2,7 +2,7 @@ name: Test AWS OIDC
 
 on:
   workflow_dispatch:
-    push:
+  push:
     branches:
       - refactor/production-ready-ecs
 
