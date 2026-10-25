@@ -28,19 +28,23 @@ jobs:
     timeout-minutes: 45
 
     steps:
+      # 1. Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2. Authenticate to AWS using GitHub OIDC
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: arn:aws:iam::927678863298:role/edutech-lms-github-actions
           aws-region: ${{ env.AWS_REGION }}
 
+      # 3. Authenticate to Amazon ECR
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      # 4. Build Docker image using immutable Git SHA
       - name: Build Docker image
         working-directory: ./app
         env:
@@ -49,6 +53,7 @@ jobs:
           set -euo pipefail
           docker build -t "$IMAGE_URI" .
 
+      # 5. Push Docker image to ECR
       - name: Push Docker image
         env:
           IMAGE_URI: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
@@ -56,7 +61,8 @@ jobs:
           set -euo pipefail
           docker push "$IMAGE_URI"
 
-      - name: Download currently deployed ECS task definition
+      # 6. Retrieve the task definition currently assigned to ECS
+      - name: Download current ECS task definition
         run: |
           set -euo pipefail
 
@@ -67,7 +73,7 @@ jobs:
             --output text)
 
           if [[ -z "$TASK_DEFINITION_ARN" || "$TASK_DEFINITION_ARN" == "None" ]]; then
-            echo "Could not find the ECS service task definition."
+            echo "ERROR: ECS service task definition not found."
             exit 1
           fi
 
@@ -79,6 +85,7 @@ jobs:
             --output json \
             > task-definition.json
 
+      # 7. Replace only the container image
       - name: Render new ECS task definition
         id: render-task-definition
         uses: aws-actions/amazon-ecs-render-task-definition@v1
@@ -87,6 +94,7 @@ jobs:
           container-name: ${{ env.ECS_CONTAINER_NAME }}
           image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
 
+      # 8. Register new task definition and deploy
       - name: Deploy to Amazon ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
@@ -96,22 +104,77 @@ jobs:
           wait-for-service-stability: true
           wait-for-minutes: 20
 
+      # 9. Verify rollout completion and deployed image
       - name: Verify deployed image and rollout
         env:
           EXPECTED_IMAGE: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
         run: |
           set -euo pipefail
 
+          echo "Waiting for ECS deployment to complete..."
+
+          DEPLOYMENT_COMPLETED=false
+
+          for attempt in {1..40}; do
+
+            SERVICE_JSON=$(aws ecs describe-services \
+              --cluster "$ECS_CLUSTER" \
+              --services "$ECS_SERVICE" \
+              --output json)
+
+            ROLLOUT_STATE=$(echo "$SERVICE_JSON" | jq -r \
+              '.services[0].deployments[] | select(.status == "PRIMARY") | .rolloutState')
+
+            TASK_DEFINITION_ARN=$(echo "$SERVICE_JSON" | jq -r \
+              '.services[0].taskDefinition')
+
+            DEPLOYED_IMAGE=$(aws ecs describe-task-definition \
+              --task-definition "$TASK_DEFINITION_ARN" \
+              --output json | jq -r \
+              --arg NAME "$ECS_CONTAINER_NAME" \
+              '.taskDefinition.containerDefinitions[] | select(.name == $NAME) | .image')
+
+            echo "Attempt $attempt/40"
+            echo "Rollout state: $ROLLOUT_STATE"
+            echo "Task definition: $TASK_DEFINITION_ARN"
+            echo "Deployed image: $DEPLOYED_IMAGE"
+
+            # Detect an unintended rollback
+            if [[ "$DEPLOYED_IMAGE" != "$EXPECTED_IMAGE" ]]; then
+              echo "ERROR: Deployed image does not match this GitHub commit."
+              echo "Possible ECS rollback or unexpected deployment."
+              exit 1
+            fi
+
+            if [[ "$ROLLOUT_STATE" == "FAILED" ]]; then
+              echo "ERROR: ECS deployment failed."
+              exit 1
+            fi
+
+            if [[ "$ROLLOUT_STATE" == "COMPLETED" ]]; then
+              echo "ECS rollout completed successfully."
+              DEPLOYMENT_COMPLETED=true
+              break
+            fi
+
+            if [[ "$attempt" -eq 40 ]]; then
+              echo "ERROR: Timed out waiting for ECS deployment."
+              exit 1
+            fi
+
+            sleep 15
+          done
+
+          if [[ "$DEPLOYMENT_COMPLETED" != "true" ]]; then
+            echo "ERROR: ECS deployment did not complete."
+            exit 1
+          fi
+
+          # Final service verification
           SERVICE_JSON=$(aws ecs describe-services \
             --cluster "$ECS_CLUSTER" \
             --services "$ECS_SERVICE" \
             --output json)
-
-          TASK_DEFINITION_ARN=$(echo "$SERVICE_JSON" | jq -r \
-            '.services[0].taskDefinition')
-
-          ROLLOUT_STATE=$(echo "$SERVICE_JSON" | jq -r \
-            '.services[0].deployments[] | select(.status == "PRIMARY") | .rolloutState')
 
           RUNNING_COUNT=$(echo "$SERVICE_JSON" | jq -r \
             '.services[0].runningCount')
@@ -119,32 +182,27 @@ jobs:
           DESIRED_COUNT=$(echo "$SERVICE_JSON" | jq -r \
             '.services[0].desiredCount')
 
-          DEPLOYED_IMAGE=$(aws ecs describe-task-definition \
-            --task-definition "$TASK_DEFINITION_ARN" \
-            --output json | jq -r \
-            --arg NAME "$ECS_CONTAINER_NAME" \
-            '.taskDefinition.containerDefinitions[] | select(.name == $NAME) | .image')
+          PENDING_COUNT=$(echo "$SERVICE_JSON" | jq -r \
+            '.services[0].pendingCount')
 
-          echo "Task definition: $TASK_DEFINITION_ARN"
-          echo "Rollout state: $ROLLOUT_STATE"
           echo "Running tasks: $RUNNING_COUNT"
           echo "Desired tasks: $DESIRED_COUNT"
-          echo "Expected image: $EXPECTED_IMAGE"
-          echo "Deployed image: $DEPLOYED_IMAGE"
-
-          if [[ "$ROLLOUT_STATE" != "COMPLETED" ]]; then
-            echo "Deployment did not complete successfully."
-            exit 1
-          fi
+          echo "Pending tasks: $PENDING_COUNT"
 
           if [[ "$RUNNING_COUNT" != "$DESIRED_COUNT" ]]; then
-            echo "Running task count does not match desired count."
+            echo "ERROR: Running task count does not match desired count."
             exit 1
           fi
 
-          if [[ "$DEPLOYED_IMAGE" != "$EXPECTED_IMAGE" ]]; then
-            echo "Deployed image does not match this GitHub commit."
+          if [[ "$PENDING_COUNT" != "0" ]]; then
+            echo "ERROR: ECS still has pending tasks."
             exit 1
           fi
 
-          echo "ECS DEV deployment verified successfully."
+          echo "======================================"
+          echo "ECS DEV DEPLOYMENT SUCCESSFUL"
+          echo "======================================"
+          echo "Image: $EXPECTED_IMAGE"
+          echo "Task definition: $TASK_DEFINITION_ARN"
+          echo "Running tasks: $RUNNING_COUNT"
+          echo "Rollout: COMPLETED"
