@@ -6,7 +6,7 @@ resource "aws_appautoscaling_target" "ecs" {
   service_namespace  = "ecs"
 }
 resource "aws_appautoscaling_policy" "ecs_cpu" {
-  name               = "edutech-lms-cpu-target-tracking"
+  name               = "edutech-lms-prod-cpu-target-tracking"
   policy_type        = "TargetTrackingScaling"
   resource_id        = aws_appautoscaling_target.ecs.resource_id
   scalable_dimension = aws_appautoscaling_target.ecs.scalable_dimension

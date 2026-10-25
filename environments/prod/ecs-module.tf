@@ -9,5 +9,6 @@ module "ecs" {
   container_image       = var.container_image
   aws_region            = var.aws_region
   desired_count         = var.ecs_desired_count
+  environment           = "prod"
 
 }

@@ -1,5 +1,5 @@
 resource "aws_ecs_cluster" "main" {
-  name = "EduTech-LMS-Cluster"
+  name = "edutech-lms-${var.environment}-cluster"
 
   setting {
     name  = "containerInsights"
@@ -7,14 +7,13 @@ resource "aws_ecs_cluster" "main" {
   }
 
   tags = {
-    Name    = "EduTech-LMS-Cluster"
+    Name    = "EduTech-LMS-${var.environment}-Cluster"
     Project = "EduTech-LMS"
   }
 }
 
-
 resource "aws_ecs_task_definition" "lms" {
-  family                   = "EduTech-LMS-Task"
+  family                   = "edutech-lms-${var.environment}-task"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   cpu                      = "512"
@@ -35,8 +34,20 @@ resource "aws_ecs_task_definition" "lms" {
         }
       ]
 
+      healthCheck = {
+        command = [
+          "CMD-SHELL",
+          "node -e \"require('http').get('http://127.0.0.1:3000/', r => process.exit(r.statusCode >= 200 && r.statusCode < 400 ? 0 : 1)).on('error', () => process.exit(1))\""
+        ]
+        interval    = 30
+        timeout     = 5
+        retries     = 3
+        startPeriod = 60
+      }
+
       logConfiguration = {
         logDriver = "awslogs"
+
         options = {
           awslogs-group         = var.log_group_name
           awslogs-region        = var.aws_region
@@ -47,13 +58,13 @@ resource "aws_ecs_task_definition" "lms" {
   ])
 
   tags = {
-    Name    = "EduTech-LMS-Task"
+    Name    = "EduTech-LMS-${var.environment}-Task"
     Project = "EduTech-LMS"
   }
 }
 
 resource "aws_ecs_service" "lms" {
-  name            = "EduTech-LMS-Service"
+  name            = "edutech-lms-${var.environment}-service"
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.lms.arn
   desired_count   = var.desired_count
@@ -64,7 +75,10 @@ resource "aws_ecs_service" "lms" {
   health_check_grace_period_seconds  = 60
 
   lifecycle {
-  ignore_changes = [desired_count]
+  ignore_changes = [
+    desired_count,
+    task_definition
+  ]
 }
 
   deployment_circuit_breaker {
@@ -77,6 +91,7 @@ resource "aws_ecs_service" "lms" {
     security_groups  = [var.ecs_security_group_id]
     assign_public_ip = false
   }
+
   load_balancer {
     target_group_arn = var.target_group_arn
     container_name   = "lms-frontend"
@@ -84,7 +99,7 @@ resource "aws_ecs_service" "lms" {
   }
 
   tags = {
-    Name    = "EduTech-LMS-Service"
+    Name    = "EduTech-LMS-${var.environment}-Service"
     Project = "EduTech-LMS"
   }
 }

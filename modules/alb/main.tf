@@ -1,18 +1,18 @@
 resource "aws_lb" "main" {
-  name               = "EduTech-LMS-ALB"
+  name               = "edutech-lms-${var.environment}-alb"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [var.alb_security_group_id]
   subnets            = var.public_subnet_ids
 
   tags = {
-    Name    = "EduTech-LMS-ALB"
+    Name    = "EduTech-LMS-${var.environment}-ALB"
     Project = "EduTech-LMS"
   }
 }
 
 resource "aws_lb_target_group" "main" {
-  name        = "EduTech-LMS-TG"
+  name        = "edutech-lms-${var.environment}-tg"
   port        = 3000
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
@@ -30,7 +30,7 @@ resource "aws_lb_target_group" "main" {
   }
 
   tags = {
-    Name    = "EduTech-LMS-TG"
+    Name    = "EduTech-LMS-${var.environment}-TG"
     Project = "EduTech-LMS"
   }
 }

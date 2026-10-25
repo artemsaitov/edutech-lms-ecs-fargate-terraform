@@ -1,5 +1,5 @@
 resource "aws_cloudwatch_metric_alarm" "ecs_high_cpu" {
-  alarm_name          = "edutech-lms-high-cpu"
+  alarm_name          = "edutech-lms-${var.environment}-high-cpu"
   alarm_description   = "ECS service CPU utilization is above 80%"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
@@ -18,7 +18,7 @@ resource "aws_cloudwatch_metric_alarm" "ecs_high_cpu" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "ecs_high_memory" {
-  alarm_name          = "edutech-lms-high-memory"
+  alarm_name          = "edutech-lms-${var.environment}-high-memory"
   alarm_description   = "ECS service memory utilization is above 80%"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2

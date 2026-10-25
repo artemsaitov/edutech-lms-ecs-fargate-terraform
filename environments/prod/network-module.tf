@@ -1,3 +1,4 @@
 module "network" {
-  source = "../../modules/network"
+  environment = "prod"
+  source      = "../../modules/network"
 }

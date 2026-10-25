@@ -7,3 +7,8 @@ variable "service_name" {
   description = "Name of the ECS service to monitor"
   type        = string
 }
+
+variable "environment" {
+  description = "Deployment environment"
+  type        = string
+}

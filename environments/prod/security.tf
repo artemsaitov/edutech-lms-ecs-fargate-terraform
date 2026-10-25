@@ -1,5 +1,5 @@
 resource "aws_security_group" "alb" {
-  name        = "EduTech-ALB-SG"
+  name        = "EduTech-ALB-SG-prod"
   description = "Allow HTTP traffic to the Application Load Balancer"
   vpc_id      = module.network.vpc_id
 
@@ -20,14 +20,14 @@ resource "aws_security_group" "alb" {
   }
 
   tags = {
-    Name    = "EduTech-ALB-SG"
+    Name    = "EduTech-ALB-SG-prod"
     Project = "EduTech-LMS"
   }
 }
 
 
 resource "aws_security_group" "ecs_tasks" {
-  name        = "EduTech-Container-SG"
+  name        = "EduTech-Container-SG-prod"
   description = "Allow traffic from ALB to ECS tasks"
   vpc_id      = module.network.vpc_id
 
@@ -48,7 +48,7 @@ resource "aws_security_group" "ecs_tasks" {
   }
 
   tags = {
-    Name    = "EduTech-Container-SG"
+    Name    = "EduTech-Container-SG-prod"
     Project = "EduTech-LMS"
   }
 }

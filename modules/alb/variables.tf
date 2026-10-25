@@ -12,3 +12,8 @@ variable "alb_security_group_id" {
   description = "Security group ID attached to the ALB"
   type        = string
 }
+
+variable "environment" {
+  description = "Deployment environment"
+  type        = string
+}

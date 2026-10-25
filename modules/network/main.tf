@@ -4,7 +4,7 @@ resource "aws_vpc" "main" {
   enable_dns_support   = true
 
   tags = {
-    Name    = "EduTech-VPC"
+    Name    = "EduTech-${var.environment}-VPC"
     Project = "EduTech-LMS"
   }
 }
@@ -14,7 +14,7 @@ resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
 
   tags = {
-    Name    = "EduTech-IGW"
+    Name    = "EduTech-${var.environment}-IGW"
     Project = "EduTech-LMS"
   }
 }
@@ -33,7 +33,7 @@ resource "aws_subnet" "public" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name    = "EduTech-Public-Subnet-${count.index + 1}"
+    Name    = "EduTech-${var.environment}-Public-Subnet-${count.index + 1}"
     Project = "EduTech-LMS"
   }
 }
@@ -43,7 +43,7 @@ resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
 
   tags = {
-    Name    = "EduTech-Public-Route-Table"
+    Name    = "EduTech-${var.environment}-Public-Route-Table"
     Project = "EduTech-LMS"
   }
 }
@@ -70,7 +70,7 @@ resource "aws_subnet" "private" {
   availability_zone = data.aws_availability_zones.available.names[count.index]
 
   tags = {
-    Name    = "EduTech-Private-Subnet-${count.index + 1}"
+    Name    = "EduTech-${var.environment}-Private-Subnet-${count.index + 1}"
     Project = "EduTech-LMS"
   }
 }
@@ -79,7 +79,7 @@ resource "aws_eip" "nat" {
   domain = "vpc"
 
   tags = {
-    Name    = "EduTech-NAT-EIP"
+    Name    = "EduTech-${var.environment}-NAT-EIP"
     Project = "EduTech-LMS"
   }
 }
@@ -91,7 +91,7 @@ resource "aws_nat_gateway" "main" {
   depends_on = [aws_internet_gateway.main]
 
   tags = {
-    Name    = "EduTech-NAT-Gateway"
+    Name    = "EduTech-${var.environment}-NAT-Gateway"
     Project = "EduTech-LMS"
   }
 }
@@ -100,7 +100,7 @@ resource "aws_route_table" "private" {
   vpc_id = aws_vpc.main.id
 
   tags = {
-    Name    = "EduTech-Private-Route-Table"
+    Name    = "EduTech-${var.environment}-Private-Route-Table"
     Project = "EduTech-LMS"
   }
 }

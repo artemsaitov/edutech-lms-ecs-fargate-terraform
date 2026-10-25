@@ -108,7 +108,8 @@ data "aws_iam_policy_document" "github_actions_permissions" {
     ]
 
     resources = [
-      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/EduTech-ECS-Task-Execution-Role"
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/EduTech-ECS-Task-Execution-Role-dev",
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/EduTech-ECS-Task-Execution-Role-prod"
     ]
 
     condition {
