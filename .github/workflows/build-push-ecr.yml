@@ -20,6 +20,7 @@ env:
   ECS_CLUSTER: edutech-lms-dev-cluster
   ECS_SERVICE: edutech-lms-dev-service
   ECS_CONTAINER_NAME: lms-frontend
+  APP_URL: http://edutech-lms-dev-alb-1858179440.us-east-1.elb.amazonaws.com/
 
 jobs:
   build-and-deploy:
@@ -116,7 +117,6 @@ jobs:
           DEPLOYMENT_COMPLETED=false
 
           for attempt in {1..40}; do
-
             SERVICE_JSON=$(aws ecs describe-services \
               --cluster "$ECS_CLUSTER" \
               --services "$ECS_SERVICE" \
@@ -206,3 +206,33 @@ jobs:
           echo "Task definition: $TASK_DEFINITION_ARN"
           echo "Running tasks: $RUNNING_COUNT"
           echo "Rollout: COMPLETED"
+
+      # 10. Verify application availability through the ALB
+      - name: HTTP smoke test
+        run: |
+          set -euo pipefail
+
+          echo "Testing application: $APP_URL"
+
+          for attempt in {1..12}; do
+            HTTP_STATUS=$(curl -sS -L \
+              --connect-timeout 5 \
+              --max-time 10 \
+              -o /dev/null \
+              -w "%{http_code}" \
+              "$APP_URL") || HTTP_STATUS="000"
+
+            echo "Attempt $attempt/12: HTTP $HTTP_STATUS"
+
+            if [[ "$HTTP_STATUS" == "200" ]]; then
+              echo "Application smoke test PASSED."
+              exit 0
+            fi
+
+            if [[ "$attempt" -eq 12 ]]; then
+              echo "ERROR: Application smoke test FAILED."
+              exit 1
+            fi
+
+            sleep 10
+          done
